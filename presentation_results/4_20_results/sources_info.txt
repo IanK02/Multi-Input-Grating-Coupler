@@ -1,0 +1,12 @@
+Source A  →  |ψ_A⟩ = amp_top |0⟩ + amp_bot |1⟩
+  |amp_A_top| = 0.1990,  phase = +83.1°
+  |amp_A_bot| = 0.2194,  phase = +43.4°
+  Relative phase Δφ_A = +39.7°
+
+Source B  →  |ψ_B⟩ = amp_top |0⟩ + amp_bot |1⟩
+  |amp_B_top| = 0.1608,  phase = +154.2°
+  |amp_B_bot| = 0.2591,  phase = -3.2°
+  Relative phase Δφ_B = +157.3°
+
+Phase difference between states : Δφ_A − Δφ_B = -117.7°
+State overlap |⟨ψ_A|ψ_B⟩|      : 0.0506  (0 = orthogonal, 1 = identical)

@@ -1,0 +1,93 @@
+[08:13:00] USER: Simulation domain Nx, Ny, Nz: [719, 1262, 70]                  
+           USER: Applied symmetries: (0, 0, 0)                                  
+           USER: Number of computational grid points: 6.5617e+07.               
+           USER: Subpixel averaging method: SubpixelSpec(attrs={},              
+           dielectric=PolarizedAveraging(attrs={}, type='PolarizedAveraging'),  
+           metal=Staircasing(attrs={}, type='Staircasing'),                     
+           pec=PECConformal(attrs={}, type='PECConformal',                      
+           timestep_reduction=0.3, edge_singularity_correction=True),           
+           pmc=Staircasing(attrs={}, type='Staircasing'),                       
+           lossy_metal=SurfaceImpedance(attrs={}, type='SurfaceImpedance',      
+           timestep_reduction=0.0, edge_singularity_correction=True),           
+           type='SubpixelSpec')                                                 
+           USER: Number of time steps: 1.0747e+05                               
+           USER: Automatic shutoff factor: 1.00e-05                             
+           USER: Time step (s): 4.6526e-17                                      
+           USER:                                                                
+                                                                                
+[08:13:14] USER: Compute source modes time (s):     14.2358                     
+[08:13:20] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:20] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:20] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:20] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:20] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:20] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:21] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:21] WARNING: Provided source time dependence appears not to fully decay  
+           by the chosen run time, broadband source set up may not be accurate. 
+           You may need to increase simulation run time.                        
+[08:13:22] USER: Rest of setup time (s):            7.3667                      
+[08:13:36] USER: Mode solver at f=4.1123793964e+14 with plane size (65, 31),    
+           direction: +                                                         
+[08:13:37] USER: Mode solver at f=4.1123793964e+14 with plane size (65, 31),    
+           direction: +                                                         
+[08:13:39] USER: Mode solver at f=4.1123793964e+14 with plane size (65, 31),    
+           direction: +                                                         
+[08:13:41] USER: Mode solver at f=4.1123793964e+14 with plane size (65, 31),    
+           direction: +                                                         
+[08:13:42] USER: Compute monitor modes time (s):    6.5830                      
+[08:16:08] USER: Solver time (s):                   158.9070                    
+           USER: Time-stepping speed (cells/s):     4.49e+10                    
+[08:16:12] INFO:  -> 4 monitors, 1 adjoint field monitors, 1 adjoint eps        
+           monitors.                                                            
+[08:16:13] USER: Post-processing time (s):          5.4519                      
+
+ ====== SOLVER LOG ====== 
+
+Processing grid and structures...
+Building FDTD update coefficients...
+Solver setup time (s):             7.4918
+
+Running solver for 107468 time steps...
+- Time step   4298 / time 2.00e-13s (  4 % done), field decay: 1.00e+00
+- Time step   8597 / time 4.00e-13s (  8 % done), field decay: 1.00e+00
+- Time step  12896 / time 6.00e-13s ( 12 % done), field decay: 1.00e+00
+- Time step  17194 / time 8.00e-13s ( 16 % done), field decay: 1.00e+00
+- Time step  21493 / time 1.00e-12s ( 20 % done), field decay: 1.00e+00
+- Time step  25792 / time 1.20e-12s ( 24 % done), field decay: 1.00e+00
+- Time step  30091 / time 1.40e-12s ( 28 % done), field decay: 1.00e+00
+- Time step  34389 / time 1.60e-12s ( 32 % done), field decay: 1.00e+00
+- Time step  38688 / time 1.80e-12s ( 36 % done), field decay: 1.00e+00
+- Time step  42987 / time 2.00e-12s ( 40 % done), field decay: 1.00e+00
+- Time step  47285 / time 2.20e-12s ( 44 % done), field decay: 1.00e+00
+- Time step  51584 / time 2.40e-12s ( 48 % done), field decay: 1.00e+00
+- Time step  55883 / time 2.60e-12s ( 52 % done), field decay: 1.00e+00
+- Time step  60182 / time 2.80e-12s ( 56 % done), field decay: 1.00e+00
+- Time step  60640 / time 2.82e-12s ( 56 % done), field decay: 9.94e-01
+- Time step  64480 / time 3.00e-12s ( 60 % done), field decay: 9.19e-01
+- Time step  68779 / time 3.20e-12s ( 64 % done), field decay: 6.66e-01
+- Time step  73078 / time 3.40e-12s ( 68 % done), field decay: 3.71e-01
+- Time step  77376 / time 3.60e-12s ( 72 % done), field decay: 1.63e-01
+- Time step  81675 / time 3.80e-12s ( 76 % done), field decay: 5.51e-02
+- Time step  85974 / time 4.00e-12s ( 80 % done), field decay: 1.46e-02
+- Time step  90273 / time 4.20e-12s ( 84 % done), field decay: 2.99e-03
+- Time step  94571 / time 4.40e-12s ( 88 % done), field decay: 4.80e-04
+- Time step  98870 / time 4.60e-12s ( 92 % done), field decay: 5.98e-05
+- Time step 103169 / time 4.80e-12s ( 96 % done), field decay: 5.79e-06
+Field decay smaller than shutoff factor, exiting solver.
+Time-stepping time (s):            150.6725
+Data write time (s):               0.7379

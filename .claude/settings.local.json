@@ -12,7 +12,10 @@
       "Read(//root/miniforge3/envs/**)",
       "Bash(pip list *)",
       "Bash(python -c \"import nbformat; nb=nbformat.read\\('/root/Python_Projects/Tidy3d/grating_couplers/overlapping_inputs.ipynb', as_version=4\\); [print\\('### CELL', i, c.cell_type\\); print\\(c.source[:3000] if c.source else ''\\); print\\('---'\\) for i,c in enumerate\\(nb.cells\\)]\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(pip show *)",
+      "Bash(python *)",
+      "Bash(jupyter --version)"
     ]
   }
 }

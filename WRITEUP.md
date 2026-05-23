@@ -90,3 +90,142 @@ gives values in $[0,1]$ $η_{ii}$ measures reconstruction fidelity for channel i
 
 ![Farfield results of 2-input device](presentation_results/5_4_results/farfield.png)
 
+---
+
+## 5. Tips for working on this problem
+
+This section captures practical knowledge accumulated through trial and error on this project. It is written for someone who has read Sections 1–4, understands the physics and code at a high level, and now needs to actually run, debug, or extend the optimization without learning everything the hard way.
+
+---
+
+### 5.1 Start with the 2-input case
+
+If you have any ideas that very fundamentally change the design try and get the idea working on the 2-input case before moving to the 4 input or any 2N input case. There are a few reasons for this, given below.
+
+1. **Cheaper.** One FDTD per iteration instead of two (with the symmetry trade), so iteration cost drops by roughly 2×. You can run 40 iterations and see meaningful convergence for a fraction of the cost.
+2. **Simpler objective.** There is only one orthogonality constraint: $|\langle C_A | C_B \rangle|^2 = 0$. If something is wrong with your FOM definition, the 2-input case exposes it quickly.
+4. **A working 2-input design is useful evidence.** If the 2-input device converges but the 4-input one does not, you know the FDTD setup and source geometry are correct, the problem is in the 4-input objective or constraint algebra.
+
+---
+### 5.2 Set bandwidth to atleast 20nm
+
+Bandwidth, called `bw` in the configuration cell defines the bandwidth of the sources used during opitimization. Setting `bw` to atleast 20nm stretches the source out in the time domain. This allows the simulation to hit its early shutoff conidition, the early shutoff condition being when all fields in the simulation have decayed below some bounadry (usually 1e-5) of their original power the simulation will end early. This allow HUGEs savings in cost, often making simulations cost only 8-10% of their estimated cost. 
+
+---
+
+### 5.3 Always run the mirror-symmetry audit before optimization
+
+The symmetry trade (deriving $C_B, C_D$ from $C_A, C_C$ instead of simulating them) can cut FlexCredit expenditure roughly in half. But the trade is only valid if the mode-monitor convention respects y-mirror symmetry on this particular grid, and if the `mirror_sign` (±1) is set correctly.
+
+**Run the audit cell before every optimization run**, not just the first one. It runs all four sources on the current parameter state (the initial or resumed checkpoint) and prints two residuals:
+
+```
++ residual (mirror_sign=+1): |c_B - (+M·c_A)| / |c_A|
+- residual (mirror_sign=-1): |c_B - (-M·c_A)| / |c_A|
+```
+
+**What good looks like:** the smaller of the two residuals should be below ~10⁻². If it is, the symmetry trade is valid and `mirror_sign` should be set to whichever sign produced the smaller value.
+
+**What bad looks like:** both residuals are large (> 0.1). This usually means the source B is not actually the y-mirror of source A, check the `yz_angle` sign convention for each source, and verify that the waveguide y-positions are symmetric about y=0.
+
+If the audit fails, fall back to running all N sources explicitly per iteration. You will pay 2× in FlexCredits but the gradients will be correct. Never use the symmetry trade with an unvalidated `mirror_sign`, doing so completely undercuts the optimization and your credits will have been wasted.
+
+---
+
+### 5.4 How to read the loss curve
+
+Plot `history_dict['values']` after any run. A healthy optimization has three recognizable phases:
+
+1. **Rapid rise (iterations 0–10, β = 1, soft projection).** The optimizer is working in a smooth, high-dimensional landscape and can make large jumps. Loss should fall quickly. If it does not move at all in the first five iterations, the learning rate is too low or the gradient is numerically zero somewhere.
+
+2. **Plateau and reorganization (β ramp begins, iterations 10–30).** As the projection sharpens, intermediate-density regions are forced toward binary. The loss often temporarily worsens or stalls as the design topology commits. This is normal, do not stop the run here. The temporary stall is the optimizer discovering that the soft topology it found is not quite feasible when binarized.
+
+3. **Slow improvement toward convergence (iterations 30–60).** The design is now mostly binary. The FOM typically asymptotes. If it is still rising steeply at iteration 60, you likely need more iterations.
+
+**Red flag:** FOM goes flat at a high value in phase 1 (before β ramp). This means the optimizer is stuck at the initial condition. Diagnose by checking whether the gradient norm is non-zero (it is in `history_dict['gradients']`). If gradients are tiny, the source is not coupling into the design region at all, verify source geometry and position.
+
+**Red flag:** FOM decreases after β ramp starts and never recovers. This indicates the soft solution was not close to any feasible binary solution. Try delaying the ramp (`beta_ramp_start`) so the optimizer has more time to find a good topology before being forced to commit.
+
+---
+
+### 5.6 How to read the design
+
+**Signs of a healthy design:**
+- Clear binary contrast (black = Si₃N₄, white = air, no large gray regions).
+- Visible grating-like periodicity along the beam propagation direction (x-axis). This is the Bragg structure responsible for coupling.
+- Solid Si₃N₄ connections at all waveguide interface buffer positions, you should see continuous material paths from design region to each waveguide stub.
+
+**Signs of a problematic design:**
+- Large gray regions (intermediate ε) persist at high β. This usually means the filter radius is too large relative to the design region, or the β annealing ramp was too slow. The filter is enforcing a minimum feature size that the optimizer cannot satisfy in this region while also satisfying the FOM.
+- No connection at a waveguide interface buffer position. The optimizer has eroded the connection. Increase `border_buffer` or widen the forced-Si₃N₄ mask.
+- The design looks entirely random (salt-and-pepper noise). The β ramp went too fast or started too early before topology could emerge. Reduce `beta_ramp_start`.
+
+---
+
+### 5.7 Tuning the objective function weights
+
+The objective has three competing terms: efficiency, orthogonality, and fabrication penalty. Small changes here make big differences.
+
+**Efficiency term** (`2(|C_A|² + |C_C|²)`): do not touch the coefficient of 2. It accounts for the B/D symmetric pairs and normalizes the scale properly relative to the orthogonality term.
+
+**Orthogonality penalty** (`λ_orth`): the default is `λ_orth = 1.0`. This is a balanced starting point but is not always optimal:
+- If the final design shows high coupling efficiency but large crosstalk (|⟨c_i|c_j⟩| > 0.2), increase `λ_orth` to 2–4. The optimizer has been prioritizing power at the expense of state separation.
+- If the final design shows low coupling efficiency and low crosstalk (very small |C_k| values across the board), `λ_orth` is too large relative to the efficiency term. The optimizer has found the trivial solution of coupling nothing to avoid the crosstalk penalty. Reduce `λ_orth` to 0.5–0.8.
+
+**Fabrication penalty** (`𝒫_fab`): the erosion–dilation penalty is applied at fixed weight throughout the run. Its magnitude is automatically normalized to the feature size, so you rarely need to tune it. The main symptom of it being too strong is that the optimizer produces an empty design (all air in the design region). If you see this, reduce the penalty weight or turn it off for the first 20 iterations.
+
+---
+
+### 5.8 The β annealing schedule and why timing matters
+
+The projection sharpness β controls the trade-off between optimizer freedom and design binarness.
+
+**Why soft first:** at β = 1 the optimizer can form large-scale topology, where the grating teeth should roughly be, which y-positions carry which channels, without being distracted by the discretization noise that a sharp projection introduces.
+
+**When to change the timing:**
+- If the design has not formed recognizable grating structure by iteration 10 (the design still looks like random noise), delay the ramp start. The optimizer needs more time in the soft regime.
+- If the design looks good at iteration during β = 1 regime but degrades during the ramp, the annealing is too fast. Extend the ramp over more iterations.
+- If computation budget is limited and you want faster convergence to a feasible (if not optimal) design, start the ramp earlier and ramp to only β = 10. The result will be less binary but faster.
+
+---
+
+### 5.9 The interface buffer: do not underestimate it
+
+The `interface_buffer` function forces `ρ = 1` (full Si₃N₄) in narrow strips at the waveguide coupling positions on left edge of the design region. Without it, the optimizer will sometimes erode the material right at the waveguide mouth, because reducing coupling to a specific waveguide can reduce crosstalk even if it also reduces total efficiency. The result is a design that looks great in the loss curve but has no physical connection to half the waveguides.
+
+**Check the interface buffer visually in every design you evaluate.** Look at the left  200–300 nm of the design region at each waveguide y-position. They should be solidly ρ = 1 in the binarized design.
+
+---
+
+### 5.10 Checkpointing: save everything, resume exactly
+
+Every iteration pickles `history_dict` to disk before the next iteration begins. This means:
+
+- If the cloud job fails mid-iteration (network error, timeout), you lose only that iteration.
+- If you want to change some optimization parameter midway, load the checkpoint, modify the parameter, and continue.
+- The pickled β schedule allows you to verify exactly what projection sharpness was used at each iteration useful when debugging designs that looked good mid-run but degraded later.
+
+---
+
+### 5.11 Common failure modes and their fixes
+
+| Symptom | Most likely cause | Fix |
+|---|---|---|
+| FOM flat from iteration 0 | Source not coupling into design region | Verify source position and angle, check that the design region CustomMedium is actually inside the source footprint |
+| FOM increases then plateaus early at high value | β ramp started too early, optimizer locked in bad topology | Increase `beta_ramp_start` from 10 to 20, also try restarting from a different random seed |
+| Loss improves but crosstalk stays high | `λ_orth` too small | Increase `λ_orth` to 3–5 and restart or continue from checkpoint |
+| Empty design (all air) in final result | Fabrication penalty or `λ_orth` too aggressive | Reduce penalty weight, start with `λ_orth = 0.5` and warm up |
+| Good efficiency but mirror residuals > 10% | Wrong `mirror_sign` or asymmetric source definition | Rerun audit, verify source B is the exact y-reflection of source A and source D is exact y-reflection of source C in 4-input case|
+| Gray regions persist at β = 30 | Filter radius too large for the available design region | Reduce filter radius or enlarge design region |
+
+
+---
+
+### 5.12 Cost management tips
+
+Cloud FDTD is expensive. A few practices that pay off:
+
+- **Estimate before every run.** Use `web.estimate_cost()` on the initial simulation. If it is higher than expected, a quick fix can be to try and reduce mesh density. Simulation costs scales roughly with x<sup>3</sup> so even a small change can make a big difference.
+- **Prototype on a smaller design region.** A 10 µm × 10 µm design at 20 nm resolution has 1/6 the parameters of the full 24 µm × 24 µm region. Use it to test FOM definition changes, debug objective function bugs, and validate the audit cell without committing full-run credits.
+- **Do not run the β = 1 phase for more than 25% of iterations.** After that, the topology is set and you are just spending credits refining a topology that will be disrupted by the β ramp anyway. The soft phase exists to find structure, not to converge.
+- **Save the optax optimizer state in checkpoints.** Restarting from parameters alone (without optimizer state) throws away Adam's momentum, effectively cold-starting the optimizer. This costs a few warm-up iterations that are wasted computation.
